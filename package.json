@@ -1,0 +1,15 @@
+{
+  "name": "mindtap-scraper",
+  "version": "0.0.0",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/markasoftware/mindtap-scraper"
+  },
+  "scripts": {
+      "start": "phantomjs src/main.js"
+  },
+  "dependencies": {
+    "phantomjs-prebuilt": "^2.1.12"
+  }
+}
