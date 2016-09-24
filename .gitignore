@@ -1,4 +1,7 @@
 stuff
+*.pdf
+*.png
+*.jpg
 
 # Everything after this is default Github stuff
 
