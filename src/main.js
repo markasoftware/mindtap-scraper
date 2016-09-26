@@ -72,7 +72,7 @@ function waitUntilExists(selector, cb) {
 function TOCController (argPage) {
     page = argPage;
     page.viewportSize = {
-        width: 1200,
+        width: 1100,
         height: 6000
     };
     page.onLoadFinished = function(status) {
@@ -89,13 +89,13 @@ function TOCController (argPage) {
 var curChapter = 0;
 function TOCRecursionTop () {
     if (curChapter === 27) {
+        console.log('Scraping complete');
         // we're done!
-        phantom.exit(0);
+        phantom.exit();
     }
     console.log('About to scrape top level section ' + curChapter);
     clickTopLevelTOC(curChapter);
     waitUntilExists('iframe', function() {
-        console.log('iframe exists');
         // set styles
         page.evaluate(function() {
             var b = document.querySelector('iframe');
@@ -117,33 +117,57 @@ function TOCRecursionTop () {
                 }
                 return !!toClick;
             })) {
+                console.log('Accessing chapter contents...');
                 waitUntilExists('#chapterTitle', nextStuff, true);
-            } else { nextStuff(); }
+            } else {
+                console.log('Already at chapter contents, about to scrape');
+                nextStuff();
+            }
             function nextStuff() {
                 if (curPage === -1) {
                     ++curPage;
                     setTimeout(nextStuff, 3500);
+                    return;
                 }
-                page.evaluate(function() {
-                    var elts = document.querySelector('iframe').contentDocument.querySelectorAll('*');
+                console.log('Scraping section ' + curChapter + ' page ' + curPage + '...');
+                var curHeight = page.evaluate(function(shouldOpenAnswers) {
+                    // this sets the font, opens answers if needed, and gets the height of the document
+                    var iDocument = document.querySelector('iframe').contentDocument;
+                    // change font
+                    var elts = iDocument.querySelectorAll('*');
                     for(var o = 0; o < elts.length; ++o) {
-                        elts[o].style.fontFamily = '"Source Sans Pro"';
+                        elts[o].style.fontFamily = '"Times New Roman"';
                     }
-                });
-                page.render(curChapter + ' - ' + curPage++ + ' - chemistry.pdf');
+                    // open answers
+                    if (shouldOpenAnswers) {
+                        var answerElts = iDocument.querySelectorAll('.answer');
+                        for(var t = 0; t < answerElts.length; ++t) {
+                            answerElts[t].click();
+                        }
+                    }
+                    // get height
+                    return iDocument.getElementById('ebook_document').getBoundingClientRect().height;
+                }, system.args[2]);
+                page.viewportSize = {
+                    width: 1100,
+                    height: curHeight + 130
+                };
+                // want to make sure it's a string
+                page.render('pdfs/' + curChapter + '-' + curPage++ + '-chemistry.pdf');
                 var isNext = page.evaluate(function() {
                     var nextBtn = document.querySelector('iframe').contentDocument.querySelector('a[title="Next Page"]');
-                    if (nextBtn) {
+                    var shouldClick = nextBtn.style.display !== 'none';
+                    if (shouldClick) {
                         nextBtn.click();
                     }
-                    return !!nextBtn;
+                    return shouldClick;
                 });
                 if (isNext) {
                     setTimeout(nextStuff, 3500);
                 } else {
+                    console.log('Current top-level section complete');
                     ++curChapter;
-                    phantom.exit();
-                    //TOCRecursionTop();
+                    TOCRecursionTop();
                 }
             }
         }, true);
