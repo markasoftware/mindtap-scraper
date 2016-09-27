@@ -110,6 +110,7 @@ function TOCRecursionTop () {
         waitUntilExists('#chapterTitle, #chapterOutline', function() {
             // are we at chapter page?
             var curPage = -1;
+            var openedLastTime = false;
             if (page.evaluate(function() {
                 var toClick = document.querySelector('iframe').contentDocument.querySelector('#chapterTitle');
                 if (toClick) {
@@ -130,24 +131,38 @@ function TOCRecursionTop () {
                     return;
                 }
                 console.log('Scraping section ' + curChapter + ' page ' + curPage + '...');
-                var curHeight = page.evaluate(function(shouldOpenAnswers) {
-                    // this sets the font, opens answers if needed, and gets the height of the document
+                openedLastTime = page.evaluate(function(shouldOpenAnswers, openedLastTime) {
+                    // this sets the font and opens answers
+                    var topElts = document.querySelectorAll('*');
+                    for(var p = 0; p < topElts.length; ++p) {
+                        topElts[p].style.fontFamily = 'Georgia';
+                    }
                     var iDocument = document.querySelector('iframe').contentDocument;
                     // change font
                     var elts = iDocument.querySelectorAll('*');
                     for(var o = 0; o < elts.length; ++o) {
-                        elts[o].style.fontFamily = '"Times New Roman"';
+                        elts[o].style.fontFamily = 'Georgia';
                     }
                     // open answers
-                    if (shouldOpenAnswers) {
-                        var answerElts = iDocument.querySelectorAll('.answer');
+                    var answerElts = iDocument.querySelectorAll('.answer');
+                    if (answerElts.length === 0 && openedLastTime) {
+                        return false;
+                    }
+                    if (shouldOpenAnswers === 'true') {
+                        if (openedLastTime) {
+                            return false;
+                        }
                         for(var t = 0; t < answerElts.length; ++t) {
                             answerElts[t].click();
                         }
+                        return true;
                     }
+                    return false;
+                }, system.args[3], openedLastTime);
+                var curHeight = page.evaluate(function(){
                     // get height
-                    return iDocument.getElementById('ebook_document').getBoundingClientRect().height;
-                }, system.args[2]);
+                    return document.querySelector('iframe').contentDocument.getElementById('ebook_document').getBoundingClientRect().height;
+                });
                 page.viewportSize = {
                     width: 1100,
                     height: curHeight + 130
@@ -163,10 +178,11 @@ function TOCRecursionTop () {
                     return shouldClick;
                 });
                 if (isNext) {
-                    setTimeout(nextStuff, 3500);
+                    setTimeout(nextStuff, 2000);
                 } else {
                     console.log('Current top-level section complete');
                     ++curChapter;
+                    openedLastTime = false;
                     TOCRecursionTop();
                 }
             }
