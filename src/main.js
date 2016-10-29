@@ -96,18 +96,51 @@ function TOCRecursionTop () {
     console.log('About to scrape top level section ' + curChapter);
     clickTopLevelTOC(curChapter);
     waitUntilExists('iframe', function() {
-        // set styles
-        page.evaluate(function() {
-            var b = document.querySelector('iframe');
-            b.style.height = '100vh';
-            b.style.width = '100vw';
-            b.style.position = 'fixed';
-            b.style.top = '0';
-            b.style.zIndex = '100000';
-            var topBar = document.getElementById('nb_toolbar');
-            topBar.style.display = 'none';
-        });
         waitUntilExists('#chapterTitle, #chapterOutline', function() {
+            // set styles
+            page.evaluate(function() {
+                var iframe = document.querySelector('iframe');
+                var iDocument = iframe.contentDocument;
+                var eDoc = iDocument.querySelector('#ebook_document');
+
+                // remove everything outside of the iframe
+                [].forEach.call(document.querySelectorAll('*:not(iframe)'), function(c) {
+                    if(!c.contains(iframe)) {
+                        c.style.display = 'none';
+                    }
+                });
+
+                // remove unnecessary icons
+                [].forEach.call(iDocument.querySelectorAll('a'), function(c) {
+                    if(c.id == 'ebook_right' || c.id == 'ebook_left') {
+                        c.style.visibility = 'hidden';
+                        return;
+                    }
+                    if(!eDoc.contains(c)) {
+                        c.style.display = 'none';
+                    }
+                });
+
+                // remove skimmer
+                iDocument.querySelector('#skimmer').style.display = 'none';
+
+                // make the iframe big
+                iframe.style.zIndex = 999999999;
+                iframe.style.top = 0;
+                iframe.style.left = 0;
+                iframe.style.height = '100vh';
+                iframe.style.width = '100vw';
+                iframe.style.position = 'fixed';
+                iframe.style.margin = 0;
+                iframe.style.padding = 0;
+                iframe.style.setProperty('border', 0, 'important');
+
+                // make the inner document big
+                eDoc.style.top = 0;
+                eDoc.style.position = 'fixed';
+                eDoc.style.height = '100vh';
+                eDoc.style.width = '100vw';
+            });
             // are we at chapter page?
             var curPage = -1;
             var openedLastTime = false;
@@ -130,14 +163,28 @@ function TOCRecursionTop () {
                     setTimeout(nextStuff, 3500);
                     return;
                 }
+
                 console.log('Scraping section ' + curChapter + ' page ' + curPage + '...');
                 openedLastTime = page.evaluate(function(shouldOpenAnswers, openedLastTime) {
-                    // this sets the font and opens answers
+                    var iDocument = document.querySelector('iframe').contentDocument;
+                    var eDoc = document.querySelector('#ebook_document');
+
+                    // remove unnecessary icons
+                    [].forEach.call(iDocument.querySelectorAll('a'), function(c) {
+                        if(c.id == 'ebook_right' || c.id == 'ebook_left') {
+                            c.style.visibility = 'hidden';
+                            return;
+                        }
+                        if(!iDocument.querySelector('#ebook_document').contains(c)) {
+                            c.style.display = 'none';
+                        }
+                    });
+
+                    // set font and open answers
                     var topElts = document.querySelectorAll('*');
                     for(var p = 0; p < topElts.length; ++p) {
                         topElts[p].style.fontFamily = 'Georgia';
                     }
-                    var iDocument = document.querySelector('iframe').contentDocument;
                     // change font
                     var elts = iDocument.querySelectorAll('*');
                     for(var o = 0; o < elts.length; ++o) {
@@ -165,9 +212,9 @@ function TOCRecursionTop () {
                 });
                 page.viewportSize = {
                     width: 1100,
-                    height: curHeight + 130
+                    height: curHeight + 230
                 };
-                // want to make sure it's a string
+                // ignore very first page because it's glitchy
                 page.render('pdfs/' + curChapter + '-' + curPage++ + '-chemistry.pdf');
                 var isNext = page.evaluate(function() {
                     var nextBtn = document.querySelector('iframe').contentDocument.querySelector('a[title="Next Page"]');

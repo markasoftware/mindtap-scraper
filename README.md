@@ -7,7 +7,9 @@ Before starting, please note that it can take upwards of 30 minutes for the scra
 3. In the same terminal window, run `npm start your@email.com YourPassward` to begin scraping. Replace `your@email.com` with the email address you use to login, and replace `YourPassword` with the password you use to login. *Note: If you see any "JSON Parse error" messages during the scraping, do not worry. This is a bug with MindTap and does not affect the scraping process.*
 
 After following these steps, separate PDF files for every "page" in the online textbook will be located in the `pdfs` directory.
+
+Sometimes, there will be issues and the program will hang at the table of contents step, or all the pdfs will be copies of the chapter 1 table of contents. If either of these happen, just restart the script.
 ### Combining and compressing the resultant PDFs
 You can use whatever tool you want to combine the PDFs created, but if you're in Linux (might work on mac too) an easy way to do it is to run the following command **from the pdfs directory** (make sure GhostScript is installed):
 
-`gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/screen -sOutputFile=../introductory-chemistry-a-foundation.pdf $(ls | sort -V)`
+`gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dFastWebView -dPDFSETTINGS=/screen -sOutputFile=../introductory-chemistry-a-foundation.pdf $(ls | sort -V)`
