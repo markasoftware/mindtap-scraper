@@ -88,7 +88,7 @@ function TOCController (argPage) {
 
 var curChapter = 0;
 function TOCRecursionTop () {
-    if (curChapter === 27) {
+    if (curChapter > 27) {
         console.log('Scraping complete');
         // we're done!
         phantom.exit();
@@ -170,14 +170,12 @@ function TOCRecursionTop () {
                     var eDoc = document.querySelector('#ebook_document');
 
                     // remove unnecessary icons
-                    [].forEach.call(iDocument.querySelectorAll('a'), function(c) {
+                    [].forEach.call(iDocument.querySelectorAll('a:not([role=link])'), function(c) {
                         if(c.id == 'ebook_right' || c.id == 'ebook_left') {
                             c.style.visibility = 'hidden';
                             return;
                         }
-                        if(!iDocument.querySelector('#ebook_document').contains(c)) {
-                            //c.style.display = 'none';
-                        }
+                        c.style.display = 'none';
                     });
 
                     // set font and open answers
@@ -215,7 +213,10 @@ function TOCRecursionTop () {
                     height: curHeight + 230
                 };
                 // ignore very first page because it's glitchy
-                page.render('pdfs/' + curChapter + '-' + curPage++ + '-chemistry.pdf');
+                if(curPage > 0) {
+                    page.render('pdfs/' + curChapter + '-' + curPage + '-chemistry.pdf');
+                }
+                curPage++;
                 var isNext = page.evaluate(function() {
                     var nextBtn = document.querySelector('iframe').contentDocument.querySelector('a[title="Next Page"]');
                     var shouldClick = nextBtn.style.display !== 'none';
