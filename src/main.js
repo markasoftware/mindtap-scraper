@@ -176,7 +176,7 @@ function TOCRecursionTop () {
                             return;
                         }
                         if(!iDocument.querySelector('#ebook_document').contains(c)) {
-                            c.style.display = 'none';
+                            //c.style.display = 'none';
                         }
                     });
 
