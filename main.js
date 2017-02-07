@@ -170,7 +170,7 @@ function TOCRecursionTop () {
                     var eDoc = document.querySelector('#ebook_document');
 
                     // remove unnecessary icons
-                    [].forEach.call(iDocument.querySelectorAll('a:not([role=link])'), function(c) {
+                    [].forEach.call(iDocument.querySelectorAll('a:not([role=link]):not([data-link-type=bookmark])'), function(c) {
                         if(c.id == 'ebook_right' || c.id == 'ebook_left') {
                             c.style.visibility = 'hidden';
                             return;
